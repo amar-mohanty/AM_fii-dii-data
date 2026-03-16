@@ -68,15 +68,22 @@ def parse_fao(csv_text):
     
     for row in reader:
         if not row or len(row) < 14: continue
-        client_type = row[0].strip()
-        if client_type in ["FII", "DII"]:
-            fao_data[client_type] = {
-                "idx_fut_long":  int(row[1]) if row[1] else 0,
-                "idx_fut_short": int(row[2]) if row[2] else 0,
-                "idx_call_long": int(row[5]) if row[5] else 0,
-                "idx_call_short":int(row[6]) if row[6] else 0,
-                "idx_put_long":  int(row[9]) if row[9] else 0,
-                "idx_put_short": int(row[10]) if row[10] else 0,
+        client_type = row[0].strip().upper()
+        if "FII" in client_type or "DII" in client_type:
+            def get_int(val):
+                try:
+                    return int(val.strip())
+                except:
+                    return 0
+                    
+            key = "FII" if "FII" in client_type else "DII"
+            fao_data[key] = {
+                "idx_fut_long":  get_int(row[1]),
+                "idx_fut_short": get_int(row[2]),
+                "idx_call_long": get_int(row[5]),
+                "idx_call_short":get_int(row[6]),
+                "idx_put_long":  get_int(row[7]),
+                "idx_put_short": get_int(row[8]),
             }
     return fao_data
 
@@ -107,7 +114,7 @@ def transform(raw_cash, raw_fao_csv):
             out["dii_net"]  = float(row.get("netValue",  0) or 0)
 
     # 2. Parse & Merge F&O Data
-    if out["date"]:
+    if raw_fao_csv:
         fao_parsed = parse_fao(raw_fao_csv)
         if "FII" in fao_parsed:
             f = fao_parsed["FII"]
@@ -165,7 +172,7 @@ if __name__ == "__main__":
         # We need the date from the cash data to fetch the right OI CSV
         date_str = ""
         for row in raw_cash:
-            if row.get("category", "").upper() in ["FII", "FPI"]:
+            if "FII" in row.get("category", "").upper() or "DII" in row.get("category", "").upper():
                 date_str = row.get("date", "")
                 break
                 
