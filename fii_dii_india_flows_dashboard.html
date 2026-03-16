@@ -903,6 +903,7 @@ function postToX() {
 
 /* ── LIVE AUTO-FETCH ── */
 const LOCAL_SERVER = 'http://localhost:5000';
+const IS_LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname);
 const AUTO_REFRESH_MS = 5 * 60 * 1000; // 5 minutes
 let nextRefreshAt = 0;
 let refreshTimer = null;
@@ -950,19 +951,21 @@ async function fetchLiveNSE(isManual = false) {
 
   let success = false;
 
-  /* ── TIER 1: Local Python server (most reliable) ── */
-  try {
-    const res = await fetch(`${LOCAL_SERVER}/api/fii-dii`, { signal: AbortSignal.timeout(3000) });
-    if (res.ok) {
-      const d = await res.json();
-      if (d.date && d.fii_net !== undefined) {
-        await injectLiveRow(d);
-        scheduleNextRefresh();
-        success = true;
-        console.log('[SYNC] ✅ Live data from local server');
+  /* ── TIER 1: Local Python server (only tried on localhost) ── */
+  if (IS_LOCAL) {
+    try {
+      const res = await fetch(`${LOCAL_SERVER}/api/fii-dii`, { signal: AbortSignal.timeout(3000) });
+      if (res.ok) {
+        const d = await res.json();
+        if (d.date && d.fii_net !== undefined) {
+          await injectLiveRow(d);
+          scheduleNextRefresh();
+          success = true;
+          console.log('[SYNC] ✅ Live data from local server');
+        }
       }
-    }
-  } catch (e) { /* server not running — fall through */ }
+    } catch (e) { /* server not running — fall through */ }
+  }
 
   /* ── TIER 2: Multiple CORS proxies ── */
   if (!success) {
@@ -1013,7 +1016,9 @@ async function fetchLiveNSE(isManual = false) {
     const sPill = document.getElementById('sPill');
     const sTxt  = document.getElementById('sTxt');
     if (sPill) { sPill.className = 'status-pill err'; }
-    if (sTxt)  { sTxt.innerHTML = isManual ? 'NSE BLOCKED — Run server.py for live data' : 'LOCAL ARCHIVE'; }
+    // Show 'start server' tip only when actually on localhost; GitHub visitors just see LOCAL ARCHIVE
+    const failMsg = (isManual && IS_LOCAL) ? 'LOCAL SERVER OFFLINE — Start server.py' : 'LOCAL ARCHIVE (Mar 13)';
+    if (sTxt) { sTxt.innerHTML = failMsg; }
     scheduleNextRefresh(); // retry anyway
   }
 
