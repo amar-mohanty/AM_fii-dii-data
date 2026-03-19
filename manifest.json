@@ -2,10 +2,10 @@
   "name": "Mr. Chartist — FII & DII Flow Terminal",
   "short_name": "FII DII Data",
   "description": "Institutional-grade FII & DII flow analytics for Indian equity markets. Live NSE data, derivatives tracking, heatmaps & more.",
-  "start_url": "/fii_dii_india_flows_dashboard.html",
+  "start_url": "/",
   "display": "standalone",
-  "background_color": "#0A0A0C",
-  "theme_color": "#0A0A0C",
+  "background_color": "#F1EEE8",
+  "theme_color": "#F1EEE8",
   "orientation": "any",
   "categories": ["finance", "business"],
   "icons": [

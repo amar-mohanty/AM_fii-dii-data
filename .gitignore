@@ -1,3 +1,8 @@
+# Dependencies — never commit these
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+
 # Scratch files
 test.js
 *.tmp
@@ -15,3 +20,7 @@ server.log
 start_server_silent.vbs
 __pycache__/
 *.pyc
+
+# Secrets / environment
+.env
+.env.local

@@ -80,6 +80,8 @@ def parse_fao(csv_text):
             fao_data[key] = {
                 "idx_fut_long":  get_int(row[1]),
                 "idx_fut_short": get_int(row[2]),
+                "stk_fut_long":  get_int(row[3]),
+                "stk_fut_short": get_int(row[4]),
                 "idx_call_long": get_int(row[5]),
                 "idx_call_short":get_int(row[6]),
                 "idx_put_long":  get_int(row[7]),
@@ -96,6 +98,8 @@ def transform(raw_cash, raw_fao_csv):
         # Default F&O fields
         "fii_idx_fut_long": 0, "fii_idx_fut_short": 0, "fii_idx_fut_net": 0,
         "dii_idx_fut_long": 0, "dii_idx_fut_short": 0, "dii_idx_fut_net": 0,
+        "fii_stk_fut_long": 0, "fii_stk_fut_short": 0, "fii_stk_fut_net": 0,
+        "dii_stk_fut_long": 0, "dii_stk_fut_short": 0, "dii_stk_fut_net": 0,
         "fii_idx_call_long": 0, "fii_idx_call_short": 0, "fii_idx_call_net": 0,
         "fii_idx_put_long": 0, "fii_idx_put_short": 0, "fii_idx_put_net": 0,
     }
@@ -118,23 +122,31 @@ def transform(raw_cash, raw_fao_csv):
         fao_parsed = parse_fao(raw_fao_csv)
         if "FII" in fao_parsed:
             f = fao_parsed["FII"]
-            out["fii_idx_fut_long"] = f["idx_fut_long"]
+            out["fii_idx_fut_long"]  = f["idx_fut_long"]
             out["fii_idx_fut_short"] = f["idx_fut_short"]
-            out["fii_idx_fut_net"] = f["idx_fut_long"] - f["idx_fut_short"]
-            
-            out["fii_idx_call_long"] = f["idx_call_long"]
-            out["fii_idx_call_short"]= f["idx_call_short"]
-            out["fii_idx_call_net"]  = f["idx_call_long"] - f["idx_call_short"]
-            
+            out["fii_idx_fut_net"]   = f["idx_fut_long"] - f["idx_fut_short"]
+
+            out["fii_stk_fut_long"]  = f["stk_fut_long"]
+            out["fii_stk_fut_short"] = f["stk_fut_short"]
+            out["fii_stk_fut_net"]   = f["stk_fut_long"] - f["stk_fut_short"]
+
+            out["fii_idx_call_long"]  = f["idx_call_long"]
+            out["fii_idx_call_short"] = f["idx_call_short"]
+            out["fii_idx_call_net"]   = f["idx_call_long"] - f["idx_call_short"]
+
             out["fii_idx_put_long"]  = f["idx_put_long"]
             out["fii_idx_put_short"] = f["idx_put_short"]
             out["fii_idx_put_net"]   = f["idx_put_long"] - f["idx_put_short"]
-            
+
         if "DII" in fao_parsed:
             d = fao_parsed["DII"]
-            out["dii_idx_fut_long"] = d["idx_fut_long"]
+            out["dii_idx_fut_long"]  = d["idx_fut_long"]
             out["dii_idx_fut_short"] = d["idx_fut_short"]
-            out["dii_idx_fut_net"] = d["idx_fut_long"] - d["idx_fut_short"]
+            out["dii_idx_fut_net"]   = d["idx_fut_long"] - d["idx_fut_short"]
+
+            out["dii_stk_fut_long"]  = d["stk_fut_long"]
+            out["dii_stk_fut_short"] = d["stk_fut_short"]
+            out["dii_stk_fut_net"]   = d["stk_fut_long"] - d["stk_fut_short"]
 
     out["_updated_at"] = datetime.now(IST).strftime("%d-%b-%Y %H:%M IST")
     out["_source"]     = "github-actions"

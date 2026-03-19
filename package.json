@@ -1,8 +1,11 @@
 {
   "name": "fii-dii-dashboard",
   "version": "1.0.0",
-  "description": "FII & DII Data Dashboard with Live Analytics",
+  "description": "FII & DII Data Dashboard with Live Analytics — hosted on Hostinger",
   "main": "server.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",

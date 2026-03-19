@@ -5,39 +5,63 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const DATA_DIR = path.join(__dirname, 'data');
 
-// Middleware
+// ── Middleware ────────────────────────────────────────────────────────────────
 app.use(cors());
-app.use(express.static(path.join(__dirname, '.'))); // Serve current dir logic, specifically HTML and data
+app.use(express.static(path.join(__dirname, '.')));
 
-// Serve the dashboard HTML on root access
+// ── Helper: read JSON file ────────────────────────────────────────────────────
+function readJson(filePath, res) {
+    try {
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ error: 'Data not found. Run the fetch pipeline first.' });
+        }
+        res.json(JSON.parse(fs.readFileSync(filePath, 'utf8')));
+    } catch (err) {
+        console.error(`Failed to read ${filePath}:`, err.message);
+        res.status(500).json({ error: 'Internal server error reading data file.' });
+    }
+}
+
+// ── Routes ────────────────────────────────────────────────────────────────────
+
+// Dashboard
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'fii_dii_india_flows_dashboard.html'));
 });
 
-// Serve the latest FII/DII JSON API
+// Latest FII/DII snapshot
 app.get('/api/data', (req, res) => {
-    try {
-        const dataPath = path.join(__dirname, 'data', 'latest.json');
-        if (fs.existsSync(dataPath)) {
-            const data = fs.readFileSync(dataPath, 'utf8');
-            res.json(JSON.parse(data));
-        } else {
-            res.status(404).json({ error: 'Data not found' });
-        }
-    } catch (err) {
-        res.status(500).json({ error: 'Internal server error' });
-    }
+    readJson(path.join(DATA_DIR, 'latest.json'), res);
 });
 
-// For local testing
+// Rolling history (last 60 days)
+app.get('/api/history', (req, res) => {
+    readJson(path.join(DATA_DIR, 'history.json'), res);
+});
+
+// Health check — useful for uptime monitoring
+app.get('/health', (req, res) => {
+    let latestDate = null;
+    try {
+        const latest = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'latest.json'), 'utf8'));
+        latestDate = latest.date || null;
+    } catch { /* data may not exist yet */ }
+
+    res.json({ status: 'ok', latestDataDate: latestDate, ts: new Date().toISOString() });
+});
+
+// ── Start (local only) ────────────────────────────────────────────────────────
 if (require.main === module) {
     app.listen(PORT, () => {
-        console.log(`🚀 Server running locally on port ${PORT}`);
-        console.log(`📊 Dashboard accessible at http://localhost:${PORT}`);
-        console.log(`⚙️ Note: Automated data extraction runs externally via GitHub Actions.`);
+        console.log(`🚀 Server running on http://localhost:${PORT}`);
+        console.log(`📊 Dashboard: http://localhost:${PORT}/`);
+        console.log(`🔌 API:       http://localhost:${PORT}/api/data`);
+        console.log(`📅 History:   http://localhost:${PORT}/api/history`);
+        console.log(`❤️  Health:    http://localhost:${PORT}/health`);
     });
 }
 
-// Export for Vercel Serverless Functions
+// Export app (useful for testing and process managers)
 module.exports = app;
